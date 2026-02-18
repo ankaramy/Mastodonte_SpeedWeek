@@ -57,18 +57,18 @@ def run_all_checks(ifc_model_path):
             if results:
                 passed = sum(1 for r in results if r["check_status"] == "pass")
                 failed = sum(1 for r in results if r["check_status"] == "fail")
-                print(f"  ✓ {check_name}: {passed} passed, {failed} failed")
+                print(f"  [OK] {check_name}: {passed} passed, {failed} failed")
                 
                 for r in results:
-                    status_symbol = "✓" if r["check_status"] == "pass" else "✗"
+                    status_symbol = "[PASS]" if r["check_status"] == "pass" else "[FAIL]"
                     print(f"    {status_symbol} {r['element_name']}: {r['actual_value']} (req: {r['required_value']})")
                     if r['comment']:
-                        print(f"      → {r['comment']}")
+                        print(f"      -> {r['comment']}")
             else:
-                print(f"  ⓘ {check_name}: No elements checked")
+                print(f"  [INFO] {check_name}: No elements checked")
         
         except Exception as e:
-            print(f"  ✗ {check_name} FAILED: {str(e)}")
+            print(f"  [ERROR] {check_name} FAILED: {str(e)}")
             all_results[check_name] = []
     
     return all_results
@@ -90,7 +90,7 @@ if __name__ == "__main__":
         if check_results:
             passed = sum(1 for r in check_results if r["check_status"] == "pass")
             failed = sum(1 for r in check_results if r["check_status"] == "fail")
-            print(f"{check_name}: {passed} ✓ / {failed} ✗")
+            print(f"{check_name}: {passed} PASS / {failed} FAIL")
         else:
             print(f"{check_name}: (no results)")
 

@@ -145,4 +145,4 @@ if __name__ == "__main__":
         for r in results:
             print(f"[{r['check_status'].upper()}] {r['element_name']}: {r['actual_value']}")
             if r['comment']:
-                print(f"  → {r['comment']}")
+                print(f"  -> {r['comment']}")
