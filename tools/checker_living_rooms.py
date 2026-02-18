@@ -75,23 +75,30 @@ def can_fit_square(area_m2, width=2.4, depth=2.4):
 # --------------------------
 # Living room compliance
 # --------------------------
-def living_room_compliance(ifc_model_path):
+def check_living_room_compliance(model):
     """
+    Check living room spaces for minimum area and clearance rules.
+    
     Rule encoded:
       - Living room min area 10 m²
       - If living+kitchen combined: min area 14 m²
       - Must allow 2.40 x 2.40 m clearance (approx via area check)
-    Returns list of per-space results.
+    
+    Args:
+        model: ifcopenshell.file object (pre-loaded IFC model)
+    
+    Returns:
+        list[dict]: One dict per living room space, following IFCore schema
     """
-    model = load_model(ifc_model_path)
     spaces = model.by_type("IfcSpace")
-
     results = []
 
     for space in spaces:
         raw_name = get_space_name(space)
         name = raw_name.lower()
         area = calculate_space_area(space)
+        space_id = getattr(space, "GlobalId", str(space.id()))
+        
         if area <= 0:
             continue
 
@@ -109,55 +116,33 @@ def living_room_compliance(ifc_model_path):
                 reasons.append("Does not allow 2.40 m x 2.40 m square (approx)")
 
             results.append({
-                "space_name": raw_name,
-                "area_m2": float(area),
-                "min_required_m2": float(min_area),
-                "clearance_ok": bool(clearance_ok),
-                "result": "pass" if passed else "fail",
-                "reason": "; ".join(reasons) if reasons else "Complies"
+                "element_id": space_id,
+                "element_type": "IfcSpace",
+                "element_name": raw_name,
+                "element_name_long": f"{raw_name} (living room zone)",
+                "check_status": "pass" if passed else "fail",
+                "actual_value": f"{area:.2f} m²",
+                "required_value": f"{min_area:.2f} m²",
+                "comment": "; ".join(reasons) if reasons else None,
+                "log": None,
             })
 
     return results
 
 # --------------------------
-# Tool entrypoint (for an LLM router later)
-# --------------------------
-def living_room_compliance_tool(ifc_model_path: str):
-    return living_room_compliance(ifc_model_path)
-
-# --------------------------
-# Schema (no API key needed)
-# --------------------------
-LIVING_ROOM_COMPLIANCE_SCHEMA = {
-    "name": "living_room_compliance_tool",
-    "description": "Checks living room spaces in an IFC for minimum area and clearance rules and returns per-space compliance results.",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "ifc_model_path": {
-                "type": "string",
-                "description": "Filesystem path to the IFC model."
-            }
-        },
-        "required": ["ifc_model_path"]
-    }
-}
-
-# --------------------------
-# Usage example (prints schema + report)
+# Local testing (optional)
 # --------------------------
 if __name__ == "__main__":
-    print("Schema OK:")
-    print(json.dumps(LIVING_ROOM_COMPLIANCE_SCHEMA, indent=2))
-
-    ifc_path = "/content/ifc-bench/projects/duplex/arc.ifc"  # change if needed
-    report = living_room_compliance_tool(ifc_path)
-
-    print("\nReport:")
-    if not report:
+    import ifcopenshell
+    ifc_path = "C:/Users/OWNER/Desktop/IAAC/T05/AI_SpeedRun/AI-Speed-Run-Week/ifc_models/arc.ifc"
+    model = ifcopenshell.open(ifc_path)
+    results = check_living_room_compliance(model)
+    
+    print("Living Room Compliance Check Results:")
+    if not results:
         print("No living room spaces matched (keyword 'living') or no computable areas.")
     else:
-        for r in report:
-            print(f"{r['space_name']}: {r['area_m2']:.2f} m² (min {r['min_required_m2']:.2f} m²) → {r['result']}")
-            if r["result"] == "fail":
-                print(f"  Reason: {r['reason']}")
+        for r in results:
+            print(f"[{r['check_status'].upper()}] {r['element_name']}: {r['actual_value']}")
+            if r['comment']:
+                print(f"  → {r['comment']}")
