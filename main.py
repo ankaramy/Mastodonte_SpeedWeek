@@ -1,17 +1,24 @@
 from tools import toola, toolb, toolc, toold
 
 TOOLS = {
-    "living_area_height": toola.living_area_height_check_tool,
-    "service_space_height": toolb.service_spaces_min_height_check_tool,
-    "dwelling_area": toolc.dwelling_area_check_tool,
-    "living_room_compliance": toold.living_room_compliance_tool,
+    # toola.py (contains dwelling area tool)
+    "dwelling_area": toola.dwelling_area_check_tool,
+
+    # toolb.py
+    "living_area_height": toolb.living_area_height_check_tool,
+
+    # toolc.py
+    "living_room_compliance": toolc.living_room_compliance_tool,
+
+    # toold.py
+    "service_space_height": toold.service_spaces_min_height_check_tool,
 }
 
 SCHEMAS = {
-    "living_area_height": toola.LIVING_AREA_HEIGHT_CHECK_SCHEMA,
-    "service_space_height": toolb.SERVICE_SPACES_MIN_HEIGHT_SCHEMA,
-    "dwelling_area": toolc.DWELLING_AREA_CHECK_SCHEMA,
-    "living_room_compliance": toold.LIVING_ROOM_COMPLIANCE_SCHEMA,
+    "dwelling_area": toola.DWELLING_AREA_CHECK_SCHEMA,
+    "living_area_height": toolb.LIVING_AREA_HEIGHT_CHECK_SCHEMA,
+    "living_room_compliance": toolc.LIVING_ROOM_COMPLIANCE_SCHEMA,
+    "service_space_height": toold.SERVICE_SPACES_MIN_HEIGHT_SCHEMA,
 }
 
 
@@ -21,27 +28,14 @@ def list_tools():
 
 def run_tool(tool_name: str, **kwargs):
     if tool_name not in TOOLS:
-        raise ValueError(
-            f"Unknown tool: {tool_name}. Available: {list(TOOLS)}"
-        )
+        raise ValueError(f"Unknown tool: {tool_name}. Available: {list(TOOLS)}")
     return TOOLS[tool_name](**kwargs)
 
 
-# --------------------------
-# Example run
-# --------------------------
 if __name__ == "__main__":
-    ifc_path = "/content/ifc-bench/projects/duplex/arc.ifc"
+    print("Available tools:", ", ".join(TOOLS.keys()))
 
-    print("Available tools:")
-    for t in list_tools():
-        print(" -", t)
+    ifc_path = "C:/Users/OWNER/Desktop/IAAC/T05/AI_SpeedRun/AI-Speed-Run-Week/ifc_models/arc.ifc"
 
-    print("\nRunning dwelling area check:\n")
-    result = run_tool(
-        "dwelling_area",
-        ifc_model_path=ifc_path,
-        min_area=36.0
-    )
-
+    result = run_tool("dwelling_area", ifc_model_path=ifc_path, min_area=36.0)
     print(result)
