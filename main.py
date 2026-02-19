@@ -52,6 +52,7 @@ def run_all_checks(ifc_model_path):
         try:
             results = func(model, **kwargs)
             all_results[check_name] = results
+            print(str(results))
             
             # Print summary
             if results:
@@ -75,7 +76,7 @@ def run_all_checks(ifc_model_path):
 
 
 if __name__ == "__main__":
-    ifc_path = r"C:\Users\OWNER\Desktop\IAAC\T05\AI_SpeedRun\AI-Speed-Run-Week\ifc_models\arc.ifc"
+    ifc_path = r"C:/Users/OWNER/Desktop/IAAC/T05/AI_SpeedRun/AI-Speed-Run-Week/ifc_models/arc.ifc"
     
     print("=" * 70)
     print("IFCore Compliance Checker - Integration Test")
