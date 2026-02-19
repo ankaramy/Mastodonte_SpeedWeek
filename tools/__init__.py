@@ -11,10 +11,12 @@ from .checker_dwelling import check_dwelling_area
 from .checker_heights import check_living_area_height
 from .checker_living_rooms import check_living_room_compliance
 from .checker_service_spaces import check_service_spaces_min_height
+from .checker_occupancy import check_bedroom_occupancy
 
 __all__ = [
     "check_dwelling_area",
     "check_living_area_height",
     "check_living_room_compliance",
     "check_service_spaces_min_height",
+    "check_bedroom_occupancy",
 ]
