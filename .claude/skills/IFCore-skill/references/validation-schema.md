@@ -4,7 +4,8 @@ Two layers: what teams produce, and how the platform stores it.
 
 ## Team Output (locked — Board Meeting #1)
 
-Each `check_*` function returns `list[dict]`. Each dict is one element checked, mapping directly to one `element_results` row in the database.
+Each `check_*` function returns `list[dict]`. Each dict is one element checked,
+mapping directly to one `element_results` row in the database.
 
 ```python
 def check_door_width(model, min_width_mm=800):
@@ -17,13 +18,13 @@ def check_door_width(model, min_width_mm=800):
             "element_name":     door.Name or f"Door #{door.id()}",
             "element_name_long": f"{door.Name} (Level 1, Zone A)",
             "check_status":     "blocked" if width_mm is None
-                               else "pass" if width_mm >= min_width_mm
-                               else "fail",
+                                else "pass" if width_mm >= min_width_mm
+                                else "fail",
             "actual_value":     f"{width_mm} mm" if width_mm else None,
             "required_value":   f"{min_width_mm} mm",
             "comment":          None if width_mm and width_mm >= min_width_mm
-                               else f"Door is {min_width_mm - width_mm} mm too narrow"
-                               if width_mm else "Width property missing",
+                                else f"Door is {min_width_mm - width_mm} mm too narrow"
+                                if width_mm else "Width property missing",
             "log":              None,
         })
     return results
@@ -50,15 +51,23 @@ def check_door_width(model, min_width_mm=800):
 - `"blocked"` — data missing, check cannot run (e.g. property not found)
 - `"log"` — informational output, not a pass/fail judgment
 
-## Platform Database
+## Platform Database Schema (D1)
+
+Four tables. The frontend reads from these via the CF Worker API.
+
+```
+┌─────────┐       ┌─────────────┐       ┌────────────────┐       ┌──────────────────┐
+│  users  │ 1───* │  projects   │ 1───* │  check_results │ 1───* │  element_results │
+└─────────┘       └─────────────┘       └────────────────┘       └──────────────────┘
+```
 
 ### `users` — one row per person
 
 ```json
 {
-  "id":        "string",
-  "name":      "string",
-  "team":      "string | null",
+  "id":         "string",
+  "name":       "string",
+  "team":       "string | null",
   "created_at": "integer"
 }
 ```
@@ -83,7 +92,7 @@ def check_door_width(model, min_width_mm=800):
 
 ```json
 {
-  "id":           "string",
+  "id":            "string",
   "project_id":    "string",
   "job_id":        "string",
   "check_name":    "string",
@@ -105,17 +114,17 @@ def check_door_width(model, min_width_mm=800):
 
 ```json
 {
-  "id":              "string",
-  "check_result_id": "string",
-  "element_id":      "string | null",
-  "element_type":    "string | null",
-  "element_name":    "string | null",
+  "id":               "string",
+  "check_result_id":  "string",
+  "element_id":       "string | null",
+  "element_type":     "string | null",
+  "element_name":     "string | null",
   "element_name_long":"string | null",
-  "check_status":    "string (pass | fail | warning | blocked | log)",
-  "actual_value":    "string | null",
-  "required_value":  "string | null",
-  "comment":         "string | null",
-  "log":             "string | null"
+  "check_status":     "string (pass | fail | warning | blocked | log)",
+  "actual_value":     "string | null",
+  "required_value":   "string | null",
+  "comment":          "string | null",
+  "log":              "string | null"
 }
 ```
 
@@ -124,16 +133,6 @@ def check_door_width(model, min_width_mm=800):
 - `check_status`: matches what the team function returns — not aggregated
 - `comment`: human-readable explanation of the result
 - `log`: debug/trace info for troubleshooting
-
-### Schema (D1)
-
-Four tables. The frontend reads from these via the CF Worker API.
-
-```
-┌─────────┐       ┌─────────────┐       ┌────────────────┐       ┌──────────────────┐
-│  users  │ 1───* │  projects   │ 1───* │  check_results │ 1───* │ element_results │
-└─────────┘       └─────────────┘       └────────────────┘       └──────────────────┘
-```
 
 ## How It Fits Together
 

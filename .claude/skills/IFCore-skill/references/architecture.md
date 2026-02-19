@@ -12,11 +12,19 @@ your-team-repo/
 └── README.md
 ```
 
-**File naming:** `checker_<topic>.py` — group related checks by topic. Only `tools/checker_*.py` matters to the platform. Everything else (local test scripts, notebooks, Gradio apps, CLI tools) is your choice — the platform ignores it.
+**File naming:** `checker_<topic>.py` — group related checks by topic.
+Only `tools/checker_*.py` matters to the platform. Everything else (local test scripts,
+notebooks, Gradio apps, CLI tools) is your choice — the platform ignores it.
 
-**Platform auto-discovery:** the orchestrator scans `teams/*/tools/checker_*.py` and collects every `check_*` function. No subdirectories — files must be directly inside `tools/`. Helper files (e.g. `tools/utils.py`) are fine for shared code but won't be scanned.
+**Platform auto-discovery:** the orchestrator scans `teams/*/tools/checker_*.py` and collects
+every `check_*` function. No subdirectories — files must be directly inside `tools/`.
+Helper files (e.g. `tools/utils.py`) are fine for shared code but won't be scanned.
 
-**Platform integration:** the platform (`ifcore-platform`) pulls all 5 team repos via git submodules and flattens them into `teams/<your-repo>/tools/` before building the Docker image. Your repo structure (`tools/checker_*.py` with `check_*` functions) must match this layout exactly for auto-discovery to work. Captains handle the pull and flatten via `deploy.sh` — teams never push to the platform repo directly.
+**Platform integration:** the platform (`ifcore-platform`) pulls all 5 team repos via git
+submodules and flattens them into `teams/<your-repo>/tools/` before building the Docker image.
+Your repo structure (`tools/checker_*.py` with `check_*` functions) must match this layout
+exactly for auto-discovery to work. Captains handle the pull and flatten via `deploy.sh` —
+teams never push to the platform repo directly.
 
 ## Code Conventions
 
@@ -28,11 +36,14 @@ your-team-repo/
 - **Return `list[str]`** — each string prefixed `[PASS]`, `[FAIL]`, or `[???]`.
 - **No bare try/except.** Only catch specific known errors.
 
-**What is `model`?** It's an `ifcopenshell.file` object — a parsed IFC file loaded into memory. You query it with `model.by_type("IfcDoor")` to get all doors, `model.by_type("IfcWall")` for walls, etc. Each element has properties like `.Name`, `.GlobalId`, and type-specific attributes.
+**What is `model`?** It's an `ifcopenshell.file` object — a parsed IFC file loaded into memory.
+You query it with `model.by_type("IfcDoor")` to get all doors, `model.by_type("IfcWall")` for
+walls, etc. Each element has properties like `.Name`, `.GlobalId`, and type-specific attributes.
 
 ## AGENTS.md / CLAUDE.md
 
-Every team MUST have this file in their repo root. Your AI assistant reads it automatically. If it does not exist, create it before starting any work.
+Every team MUST have this file in their repo root. Your AI assistant reads it automatically.
+If it does not exist, create it before starting any work.
 
 **Template:**
 ```markdown
@@ -52,11 +63,11 @@ Always read the IFCore skill before developing on this project.
 ## Issue Reporting
 When you encounter a contract mismatch, skill gap, or integration problem:
 gh issue create --repo SerjoschDuering/iaac-bimwise-skills --label "<label>" --title "<title>"
-
 Labels: contract-gap, skill-drift, learning, schema-change, integration-bug
 
 ## Learnings
 <!-- Add here after every debugging session that reveals a recurring issue -->
 ```
 
-**Keep it updated.** After any session where you hit a recurring error, add it to Learnings. The AI gets smarter with every fix — only if you write it down.
+**Keep it updated.** After any session where you hit a recurring error, add it to Learnings.
+The AI gets smarter with every fix — only if you write it down.

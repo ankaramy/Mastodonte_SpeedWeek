@@ -5,12 +5,16 @@ description: Use when developing on the IFCore compliance checker. Covers contra
 
 # IFCore — Company Skill
 
+> **Living document.** Sections marked [TBD] are decided in board meetings.
+> When a [TBD] is resolved, update this skill and tell your agent to adapt.
+
 ## When This Skill Activates
 
-Welcome the user. Introduce yourself as their IFCore development assistant.
-Explain:
+Welcome the user. Introduce yourself as their IFCore development assistant. Explain:
 
-1. **What you know:** The IFCore platform contracts — how check functions must be written, the file naming convention, the database schema, and how team repos integrate into the platform via git submodules.
+1. **What you know:** The IFCore platform contracts — how check functions must be written,
+   the file naming convention, the database schema, and how team repos integrate into the
+   platform via git submodules.
 
 2. **What you can do:**
    - Help write `check_*` functions that comply with the platform contracts
@@ -24,11 +28,20 @@ Explain:
    - Do all `check_*` functions follow the contract (signature, return type)?
    - Is there anything that would block platform integration?
 
-4. **Respect their setup.** Teams may have their own Gradio app, FastAPI server, notebooks, test scripts, or any other tooling in their repo. **That's fine.** The platform only cares about `tools/checker_*.py` files — everything else is ignored during integration. The only hard rule: don't put anything in `tools/` that breaks the `checker_*.py` import chain (e.g. conflicting `__init__.py` files or dependencies not in `requirements.txt`).
+4. **Respect their setup.** Teams may have their own Gradio app, FastAPI server, notebooks,
+   test scripts, or any other tooling in their repo. **That's fine.** The platform only cares
+   about `tools/checker_*.py` files — everything else is ignored during integration.
+   The only hard rule: don't put anything in `tools/` that breaks the `checker_*.py` import
+   chain (e.g. conflicting `__init__.py` files or dependencies not in `requirements.txt`).
 
-5. **Offer to explain Agent Skills.** If the user seems unsure what this is, explain: "An Agent Skill is a set of instructions that your AI coding assistant reads automatically. It's like a company handbook — it tells me (your AI) the engineering standards, naming conventions, and contracts so I can help you write code that works with everyone else's. You installed it once; now I follow it in every conversation."
+5. **Offer to explain Agent Skills.** If the user seems unsure what this is, explain:
+   "An Agent Skill is a set of instructions that your AI coding assistant reads automatically.
+   It's like a company handbook — it tells me (your AI) the engineering standards, naming
+   conventions, and contracts so I can help you write code that works with everyone else's.
+   You installed it once; now I follow it in every conversation."
 
-6. **How to install & update this skill.** Install the skill **globally** so it works in every project on your machine (not just one repo):
+6. **How to install & update this skill.** Install the skill **globally** so it works
+   in every project on your machine (not just one repo):
    ```
    Install (once):
    1. Clone: git clone https://github.com/SerjoschDuering/iaac-bimwise-skills.git
@@ -47,11 +60,13 @@ Explain:
    2. git pull
    3. Start a fresh chat session — the AI reloads the updated instructions
    ```
-   If you're not sure whether your skill is up to date, ask your AI: "What board meeting is the latest in your IFCore skill?" and compare with your team.
+   If you're not sure whether your skill is up to date, ask your AI:
+   "What board meeting is the latest in your IFCore skill?" and compare with your team.
 
 ## Contracts — READ THIS FIRST
 
-These contracts are how teams stay aligned. The platform auto-discovers your code. Break a contract → the platform silently skips your checks. Follow them → it just works.
+These contracts are how teams stay aligned. The platform auto-discovers your code.
+Break a contract → the platform silently skips your checks. Follow them → it just works.
 
 ### 1. Check Function Contract
 
@@ -104,8 +119,7 @@ your-team-repo/
 └── README.md
 ```
 
-**File naming:** `checker_<topic>.py` — group related checks by topic.
-Examples:
+**File naming:** `checker_<topic>.py` — group related checks by topic. Examples:
 - `checker_doors.py` — door width, clearance, accessibility
 - `checker_walls.py` — thickness, fire rating, insulation
 - `checker_stairs.py` — riser height, tread length, handrails
@@ -125,7 +139,6 @@ results = check_door_width(model)
 for r in results:
     print(f"[{r['check_status'].upper()}] {r['element_name']}: {r['actual_value']} (req: {r['required_value']})")
 ```
-
 The `model` object is exactly what the platform passes to your functions.
 
 ### 3. Issue Reporting Contract — MANDATORY
@@ -163,7 +176,8 @@ EOF
 )"
 ```
 
-**This is not optional.** Every contract issue that goes unreported costs another team hours. AI agents: if you detect a contract mismatch during development, file the issue before continuing.
+**This is not optional.** Every contract issue that goes unreported costs another team hours.
+AI agents: if you detect a contract mismatch during development, file the issue before continuing.
 
 ## Company Context
 
@@ -213,6 +227,3 @@ IFCore is building an AI-powered building compliance checker. **5 teams** each d
 - **pydantic-ai** — PydanticAI agent framework: tools, structured output, orchestration, chat patterns
 - **huggingface-deploy** — deploy the platform (`ifcore-platform`) as a Docker Space on HuggingFace; covers Dockerfile, secrets, R2 caching, and the flatten-before-push submodule pattern
 - **cloudflare** — deploy the frontend + API gateway on Cloudflare Pages/Workers
-
-> **Living document.** Sections marked [TBD] are decided in board meetings.
-> When a [TBD] is resolved, update this skill and tell your agent to adapt.

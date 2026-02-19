@@ -19,21 +19,21 @@ ifcore-team-a/
 ifcore-platform/           ← ONE git repo
 │
 ├── backend/               → deploys to HuggingFace Space
-│   ├── README.md          ← HF frontmatter (sdk: docker, app_port: 7860)
+│   ├── README.md              ← HF frontmatter (sdk: docker, app_port: 7860)
 │   ├── Dockerfile
 │   ├── requirements.txt
 │   ├── main.py
 │   ├── orchestrator.py
 │   ├── deploy.sh
-│   └── teams/             ← gitignored, populated by deploy.sh
+│   └── teams/                 ← gitignored, populated by deploy.sh
 │       ├── ifcore-team-a/tools/checker_*.py
 │       ├── ifcore-team-b/tools/checker_*.py
-│       └── ...            ← one folder per team, flattened from submodules
+│       └── ...                ← one folder per team, flattened from submodules
 │
 └── frontend/              → deploys to Cloudflare (Pages + Worker)
     ├── public/
     │   └── index.html
-    ├── src/               ← static app (CF Pages)
+    ├── src/                   ← static app (CF Pages)
     │   ├── app.js
     │   ├── api.js
     │   ├── store.js
@@ -43,11 +43,11 @@ ifcore-platform/           ← ONE git repo
     │       ├── results/index.js
     │       ├── viewer-3d/index.js
     │       └── dashboard/index.js
-    ├── functions/         ← API gateway (CF Pages Functions = Worker)
+    ├── functions/             ← API gateway (CF Pages Functions = Worker)
     │   └── api/
     │       └── [[route]].js
     ├── migrations/
     │   └── 0001_create_jobs.sql
     ├── package.json
-    └── wrangler.toml      ← D1 + R2 bindings, custom domain
+    └── wrangler.toml          ← D1 + R2 bindings, custom domain
 ```

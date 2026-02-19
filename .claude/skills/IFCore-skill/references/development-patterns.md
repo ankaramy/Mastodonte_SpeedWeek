@@ -5,19 +5,27 @@
 You're helping someone who may be new to coding, AI, or both. Before doing anything:
 
 - **Ask what they want to build.** Don't assume — let them explain in their own words.
-- **Suggest an approach and explain why.** If you recommend something, say what it does and why it's a good fit. Offer to explain any term they might not know.
+- **Suggest an approach and explain why.** If you recommend something, say what it does
+  and why it's a good fit. Offer to explain any term they might not know.
 - **Break things into small steps.** One thing at a time. Check in after each step.
-- **Use plain language.** Say "a function that checks door widths" not "a callable that validates dimensional properties." If you must use a technical term, explain it inline.
+- **Use plain language.** Say "a function that checks door widths" not "a callable that
+  validates dimensional properties." If you must use a technical term, explain it inline.
 
 ## When Someone Wants to Add a New Check
 
 Start a conversation — don't jump straight to code.
 
-1. **Understand what they want.** Ask: "What rule or regulation should this check enforce?" Get a concrete example — "doors must be at least 900mm wide" is better than "door check."
-2. **Talk through the approach.** Explain what the check function will do, what IFC data it needs, and roughly how it works. Ask if that sounds right.
-3. **Suggest a plan.** Offer to write a short plan first (see template below). This is a simple document that describes the goal and what "done" looks like. It helps avoid building the wrong thing. If the user prefers to skip it, that's fine — go straight to code.
-4. **Build it together.** Write the check function, test it, and walk through the result. Explain what each part does. Update AGENTS.md with anything you learned.
-5. **Review when done.** Suggest a quick review — either in a fresh chat or with a subagent if available. This catches things you both might have missed.
+1. **Understand what they want.** Ask: "What rule or regulation should this check enforce?"
+   Get a concrete example — "doors must be at least 900mm wide" is better than "door check."
+2. **Talk through the approach.** Explain what the check function will do, what IFC data
+   it needs, and roughly how it works. Ask if that sounds right.
+3. **Suggest a plan.** Offer to write a short plan first (see template below). This is
+   a simple document that describes the goal and what "done" looks like. It helps avoid
+   building the wrong thing. If the user prefers to skip it, that's fine — go straight to code.
+4. **Build it together.** Write the check function, test it, and walk through the result.
+   Explain what each part does. Update AGENTS.md with anything you learned.
+5. **Review when done.** Suggest a quick review — either in a fresh chat or with a subagent
+   if available. This catches things you both might have missed.
 
 ## Feature Plans (Optional but Helpful)
 
@@ -32,7 +40,8 @@ feature-plans/
     └── learnings.md     # what went wrong, what to do differently
 ```
 
-A "plan" (sometimes called a PRD — Product Requirements Document) is just a short description of what you're building. It helps you think before you code.
+A "plan" (sometimes called a PRD — Product Requirements Document) is just a short
+description of what you're building. It helps you think before you code.
 
 ## Plan Template
 
