@@ -1,0 +1,303 @@
+ Team B — User Portal
+
+**Branch:** `feature/team-B-adminpanel` | **Verdict:** NEEDS CHANGES (major scope reduction)
+
+| Criterion | Score | Notes |
+|-----------|-------|-------|
+| Architecture Fit | 3/5 | Correctly uses CF Worker + Pages + D1, but ignores existing patterns |
+| Scope Feasibility | 1/5 | 4-week enterprise plan for a 1-day sprint |
+| Shared State | 1/5 | No Zustand slice docs. No Reads/Writes section |
+| API Design | 2/5 | 13+ new endpoints, none follow async job pattern |
+| Security | 3/5 | Good on paper, impossible to implement correctly in 1 day |
+
+**Shared State:** Reads `store.projects` (profile page). Writes: none (uses Better Auth `useSession()` hook).
+
+---
+
+Hey Team B! You took on one of the most important features in the entire platform.
+Authentication is the backbone that every other team depends on.
+Here is where you stand and what to do tomorrow.
+
+---
+
+## What You Did Well
+
+1. **You thought like a real product team.** Your PRD covers email verification,
+   billing, support tickets, account deletion, RBAC, monitoring -- that is a
+   complete SaaS auth system. The fact that you thought through edge cases
+   like stale Stripe webhooks and partial provisioning rollback shows genuine
+   product thinking. That matters.
+
+2. **You picked the right infrastructure.** Cloudflare Workers for API, Pages
+   for frontend, D1 for storage -- this matches the platform architecture exactly.
+   You did not invent your own deployment target or try to spin up a separate
+   server. That alignment saves everyone time.
+
+3. **Security was on your mind from the start.** HTTP-only cookies, CSRF protection,
+   SameSite headers, encrypted fields, PCI considerations for Stripe -- you
+   clearly researched what secure auth looks like. That awareness is more valuable
+   than most people realize.
+
+---
+
+## The Big Picture
+
+The IFCore platform has a specific architecture. Here is the part that matters for you:
+
+```
+Browser  -->  Cloudflare Worker (API + auth)  -->  HuggingFace Space (IFC checks)
+                     |
+                  D1 (database)
+                  R2 (file storage)
+```
+
+Your job is to add **one thing** to this picture: a way for users to sign up,
+log in, and have the platform know who they are. That is it. Every other team
+(3D viewer, dashboard, report generator) just needs `useSession()` to get the
+current user. If you ship that, you unblock everyone.
+
+The platform already has a `users` table in D1:
+```sql
+CREATE TABLE users (id TEXT PRIMARY KEY, name TEXT, team TEXT, created_at INTEGER);
+```
+
+Your auth system needs to work **alongside** this, not replace it.
+
+---
+
+## What Needs to Change
+
+### 1. Scope: cut 80% of the features
+
+**Why:** Your PRD describes a 4-week enterprise build. The course ends tomorrow.
+Even experienced engineers at companies like Auth0 took months to build what you
+described. This is not a criticism -- it means you were thinking big. But shipping
+something real beats having a perfect plan that never runs.
+
+**What to keep:** Sign up, log in, log out, and a profile page. That is your MVP.
+
+### 2. Use Better Auth instead of building auth from scratch
+
+**Why:** The Cloudflare skill that your AI agent has access to includes a complete
+Better Auth blueprint. Better Auth is an open-source library that handles password
+hashing, sessions, cookies, and database tables automatically. It works with D1,
+Drizzle, and Hono -- exactly the stack the platform uses.
+
+Building auth from scratch (your own password hashing, session tokens, CSRF
+protection) is a weeks-long project with serious security risks if done wrong.
+Better Auth gives you all of that in about 50 lines of config.
+
+**Critical detail:** Do NOT use bcrypt for password hashing. Cloudflare Workers
+have a 10ms CPU limit on the free tier. Bcrypt exceeds that limit and your signup
+will fail with Error 1102. The Cloudflare skill has a PBKDF2 hasher that works
+within Workers limits.
+
+### 3. Do not modify the existing `users` table
+
+**Why:** Other teams already depend on the current schema. If you change it,
+their code breaks. Better Auth creates its own tables (`user`, `session`,
+`account`, `verification`) -- it does not touch the existing `users` table.
+This is additive, not destructive.
+
+### 4. Follow the platform's shared state pattern
+
+**Why:** The platform uses Zustand for client-side state. Each feature gets a
+"slice" that other teams can read from. Your PRD did not include a Shared State
+section, which means other teams would not know how to access auth data.
+
+The good news: Better Auth provides a `useSession()` React hook. Other teams
+can just call it. You do not even need a Zustand slice -- the hook is the
+interface.
+
+### 5. Drop all external service dependencies
+
+**Why:** Stripe requires a merchant account. Email verification requires a
+transactional email provider (SendGrid, Resend, etc.). TOTP/2FA requires
+a mobile app integration. None of these are provisioned, and setting them up
+takes longer than building the auth feature itself.
+
+---
+
+## Your 1-Day Game Plan
+
+Your AI coding agent has the **Cloudflare skill** installed. It contains the
+exact Better Auth blueprint below. Tell your agent: "Use the Cloudflare skill's
+Better Auth pattern to set up authentication." It will know what to do.
+
+### Morning (3 hours): Backend auth
+
+**Step 1 -- Install Better Auth** (10 min)
+```bash
+cd frontend
+npm install better-auth drizzle-orm
+```
+
+**Step 2 -- Add the nodejs_compat flag** (5 min)
+
+In `frontend/wrangler.jsonc`, add:
+```jsonc
+"compatibility_flags": ["nodejs_compat"]
+```
+
+**Step 2b -- Update the Bindings type** (5 min)
+
+In `frontend/worker/types.ts`, add the auth secrets:
+```typescript
+export type Bindings = {
+  DB: D1Database;
+  STORAGE: R2Bucket;
+  ASSETS: Fetcher;
+  HF_SPACE_URL: string;
+  BETTER_AUTH_SECRET: string;   // add this
+  BETTER_AUTH_URL: string;      // add this
+};
+```
+
+**Step 3 -- Create the auth config** (30 min)
+
+Create `frontend/worker/lib/auth.ts`. The Cloudflare skill has the full file
+including the PBKDF2 hasher. Key points:
+- Use `drizzleAdapter(db, { provider: 'sqlite' })` for D1
+- Set `basePath: '/api/auth'` (NOT `/auth` -- see note below)
+- Add both localhost and production URLs to `trustedOrigins`
+- Use the PBKDF2 hash/verify functions (NOT bcrypt)
+
+**Critical path note:** The Worker only intercepts requests matching
+`run_worker_first: ["/api/*"]` in `wrangler.jsonc`. If you mount auth
+at `/auth/*`, requests will never reach the Worker -- they hit the
+static asset handler and 404. Always use `/api/auth/*`.
+
+**Step 4 -- Mount auth routes in the Worker** (15 min)
+
+First, fix CORS. The existing `cors({ origin: "*" })` is incompatible with
+auth cookies (`credentials: 'include'`). Browsers reject wildcard origins
+when credentials are sent. Replace with an explicit allowlist:
+```typescript
+app.use("/api/*", cors({
+  origin: ["http://localhost:5173", "https://ifcore-platform.tralala798.workers.dev"],
+  credentials: true,
+}));
+```
+
+Then mount the auth routes under `/api/auth/*`:
+```typescript
+app.on(['GET', 'POST'], '/api/auth/*', (c) => {
+  const auth = createAuth(c.env)
+  return auth.handler(c.req.raw)
+})
+```
+
+**Step 5 -- Set secrets** (10 min)
+
+For production:
+```bash
+wrangler secret put BETTER_AUTH_SECRET    # generate with: openssl rand -base64 32
+wrangler secret put BETTER_AUTH_URL       # https://ifcore-platform.tralala798.workers.dev
+```
+
+For local development, create `frontend/.dev.vars`:
+```env
+BETTER_AUTH_SECRET=local-dev-secret-change-me
+BETTER_AUTH_URL=http://localhost:5173
+```
+Without `.dev.vars`, local `npm run dev` will crash on missing env vars.
+
+**Step 6 -- Create the D1 migration** (20 min)
+
+Add a new migration file (e.g., `0003_auth.sql`) with the Better Auth tables:
+`session`, `account`, `verification`. Better Auth defaults to a table named
+`user` (singular), but the platform already has `users` (plural). To avoid
+two separate user tables, configure Better Auth to use the existing table:
+```typescript
+// in auth.ts config
+user: { tableName: "users" },
+```
+Then the migration only adds columns to `users` (e.g., `email_verified`,
+`image`) and creates the three new tables. Do NOT drop or recreate `users`.
+
+**Note:** The `@better-auth/cli generate` command does NOT work with the
+factory-pattern auth config required for Workers. Create the SQL manually.
+See the Better Auth docs for exact column definitions.
+
+### Afternoon (3 hours): Frontend
+
+**Step 7 -- Create the auth client** (15 min)
+
+Create `frontend/src/lib/auth-client.ts`:
+```typescript
+import { createAuthClient } from 'better-auth/react'
+
+export const authClient = createAuthClient({
+  baseURL: '/api/auth',
+  fetchOptions: { credentials: 'include' },
+})
+
+export const { useSession } = authClient
+```
+
+**Step 8 -- Build the login page** (45 min)
+
+A simple form with email + password fields, a "Log In" button, and a
+"Sign Up" button. The Cloudflare skill has a complete `AuthForm.tsx` component
+you can adapt. Add it as a route at `/login` using TanStack Router.
+
+**Step 9 -- Build the profile page** (30 min)
+
+Show the current user's name, email, and team. Add a "Log Out" button.
+Route: `/profile`.
+
+**Step 10 -- Update the navbar** (15 min)
+
+If logged in: show the user's name and a link to `/profile`.
+If not logged in: show a "Log In" link to `/login`.
+
+**Step 11 -- Test end to end** (30 min)
+
+1. Sign up with an email and password
+2. Verify you are redirected and the navbar shows your name
+3. Log out and verify the navbar changes
+4. Log back in and verify your profile page works
+
+**Step 12 -- Deploy** (15 min)
+```bash
+cd frontend
+npm run db:migrate:remote   # applies the new auth migration
+npm run deploy              # builds + deploys to Cloudflare
+```
+
+---
+
+## What to Cut (and Why That is OK)
+
+| Feature | Why it is cut |
+|---------|---------------|
+| Stripe billing | Requires a merchant account nobody has set up |
+| Email verification | Requires a transactional email provider |
+| Password reset | Depends on email sending |
+| 2FA / TOTP | Nice for security, but adds a full day of work |
+| 4-role RBAC | Use `role: "member" or "captain"` -- two roles is enough |
+| Support ticketing | Completely separate feature, not auth |
+| Account deletion with 30-day retention | Post-launch feature |
+| API key management | Not needed for the demo |
+| Monitoring and alerting | Not needed for the demo |
+
+Cutting features is not failure. Every real product launch involves cutting scope.
+The difference between a shipped product and a perfect plan is that one of them
+actually exists. You aimed high -- now let's ship what matters.
+
+---
+
+## How Your Feature Connects to Others
+
+Authentication is a **foundation feature**. Here is how other teams use it:
+
+- **Team D (3D Viewer):** Calls `useSession()` to know which user uploaded a model
+- **Team E (Dashboard):** Filters check results by user/team using the session
+- **Report Generator:** Attaches user info to exported compliance reports
+- **Every team:** Can protect routes with your auth -- only logged-in users see the app
+
+If you ship login + signup + session management, you give every other team
+a `useSession()` hook that returns `{ id, email, name }`. That is the most
+valuable single feature anyone can deliver tomorrow.
+
+You aimed high and that is great. Now let's focus on what we can ship.
